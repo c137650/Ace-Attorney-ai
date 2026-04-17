@@ -1,0 +1,69 @@
+{
+    "api": {
+        "provider": "openai",
+        "base_url": "https://api.minimaxi.com/v1",
+        "api_key": "sk-cp-k2yBZ-DmPvfeNATpA3W4-qtrH3TaE3sHWcm8sxyMMHOb-ftzxAp5RKJJgbNYMaC3RPEgsopBHBJnwhlGNmclAO8QkFYPQWzdSZ8A46huy7TGrHwcqeQIWws",
+        "model": "minimax-m2.7",
+        "temperature": 0.7,
+        "max_tokens": 500,
+        "timeout": 30
+    },
+    "agents": {
+        "player_debaters": {
+            " debater_1": {
+                "name": "正方一辩",
+                "role": "debater",
+                "description": "擅长开篇立论，逻辑清晰"
+            },
+            "debater_2": {
+                "name": "正方二辩",
+                "role": "debater",
+                "description": "擅长驳论，攻击对方弱点"
+            },
+            "debater_3": {
+                "name": "正方三辩",
+                "role": "debater",
+                "description": "擅长质询和自由辩论"
+            }
+        },
+        "opponent_debaters": {
+            "debater_1": {
+                "name": "反方一辩",
+                "role": "debater",
+                "description": "擅长开篇立论，逻辑清晰"
+            },
+            "debater_2": {
+                "name": "反方二辩",
+                "role": "debater",
+                "description": "擅长驳论，攻击对方弱点"
+            },
+            "debater_3": {
+                "name": "反方三辩",
+                "role": "debater",
+                "description": "擅长质询和自由辩论"
+            }
+        },
+        "coaches": {
+            "player_coach": {
+                "name": "正方教练",
+                "role": "coach",
+                "description": "分析局势，提供战术指导"
+            },
+            "opponent_coach": {
+                "name": "反方教练",
+                "role": "coach",
+                "description": "分析局势，提供战术指导"
+            }
+        }
+    },
+    "prompts": {
+        "debater_system": "你是一位经验丰富的辩论赛辩手。你的发言应当逻辑清晰、论据充分、语言犀利。",
+        "coach_system": "你是一位资深的辩论赛教练。你的指导应当精准、有针对性、简洁有力。",
+        "debater_prompt_template": "辩题：{topic}\n你的立场：{stance}\n当前环节：{phase}\n教练指导：{coach_guidance}\n{context}\n\n请生成一段简洁有力的发言（50-100字）：",
+        "coach_prompt_template": "辩题：{topic}\n己方立场：{stance}\n当前环节：{phase}\n对方发言：{opponent_speech}\n辩论历史：{history}\n\n请给出简洁的战术指导（30-50字）："
+    },
+    "fallback": {
+        "enabled": true,
+        "reason": "当API调用失败时使用预设句子"
+    }
+}
