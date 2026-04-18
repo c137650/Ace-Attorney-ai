@@ -6,6 +6,9 @@
 ![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
+## 游戏演示
+bilibili：https://www.bilibili.com/video/BV1UwdsBWEHB?buvid=HW8CBFD886E7A9E27CF9ED06B99B63924F2B0&is_story_h5=false&mid=DZ3tyvgKLvaqpdsoM%2BSDlw%3D%3D&plat_id=116&share_from=ugc&share_medium=harmony&share_plat=harmony&share_session_id=9422e24c-6cfd-4f06-84c9-8f19e28b0b42&share_source=weixin&share_tag=s_i&timestamp=1776523734&unique_k=rbjUL9B&up_id=594489650 
+
 ## 🎮 游戏简介
 
 **驴唇不对马嘴** 是一款以"马与驴"为主题的AI辩论策略游戏。玩家扮演正方（马方），与AI控制的反方（驴方）展开激烈辩论。
