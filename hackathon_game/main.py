@@ -10,6 +10,10 @@ AI 辩论游戏 - Pygame 界面（对接后端版）
 import pygame
 import os
 import sys
+import json
+import subprocess
+import ctypes
+from ctypes import wintypes
 
 # 添加后端路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'backend'))
@@ -175,6 +179,97 @@ class Game:
             print(f"✗ 加载后端失败: {e}")
             self.debate_game = None
 
+    def _get_window_screen_position(self):
+        """获取Pygame客户区左上角屏幕坐标。"""
+        try:
+            wm_info = pygame.display.get_wm_info()
+            hwnd = wm_info.get("window")
+            if not hwnd:
+                return None
+
+            point = wintypes.POINT(0, 0)
+            ok = ctypes.windll.user32.ClientToScreen(int(hwnd), ctypes.byref(point))
+            if not ok:
+                return None
+            return point.x, point.y
+        except Exception:
+            return None
+
+    def open_tk_input_dialog(self, screen_x: int, screen_y: int, width: int, height: int):
+        """打开附着在input_area上的无边框Tk输入框，Enter提交。"""
+        dialog_script = (
+            "import json,sys,tkinter as tk\n"
+            "root=tk.Tk()\n"
+            "x=int(sys.argv[1]); y=int(sys.argv[2]); w=int(sys.argv[3]); h=int(sys.argv[4])\n"
+            "initial = sys.argv[5] if len(sys.argv) > 5 else ''\n"
+            "root.overrideredirect(True)\n"
+            "root.attributes('-topmost', True)\n"
+            "root.geometry(f'{w}x{h}+{x}+{y}')\n"
+            "root.configure(bg='#1f2330')\n"
+            "entry_var = tk.StringVar(value=initial)\n"
+            "entry = tk.Entry(root, textvariable=entry_var, bd=0, highlightthickness=0, font=('Microsoft YaHei UI', 11), insertbackground='#ffffff', fg='#ffffff', bg='#2f3444')\n"
+            "entry.place(x=6, y=6, width=max(10, w-12), height=max(10, h-12))\n"
+            "def submit(_event=None):\n"
+            "    print(json.dumps({'text': entry_var.get()}, ensure_ascii=False), flush=True)\n"
+            "    root.destroy()\n"
+            "def cancel(_event=None):\n"
+            "    print(json.dumps({'text': None}, ensure_ascii=False), flush=True)\n"
+            "    root.destroy()\n"
+            "entry.bind('<Return>', submit)\n"
+            "entry.bind('<Escape>', cancel)\n"
+            "root.bind('<FocusOut>', cancel)\n"
+            "entry.focus_force()\n"
+            "root.mainloop()\n"
+        )
+
+        try:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-c",
+                    dialog_script,
+                    str(screen_x),
+                    str(screen_y),
+                    str(width),
+                    str(height),
+                    self.player_input,
+                ],
+                capture_output=True,
+                text=False,
+                timeout=300,
+            )
+
+            def _safe_decode(raw):
+                if raw is None:
+                    return ""
+                if isinstance(raw, str):
+                    return raw
+                try:
+                    return raw.decode("utf-8")
+                except UnicodeDecodeError:
+                    return raw.decode("gbk", errors="replace")
+
+            stdout_text = _safe_decode(result.stdout)
+            stderr_text = _safe_decode(result.stderr)
+
+            if result.returncode != 0:
+                err = stderr_text.strip() if stderr_text else "未知错误"
+                print(f"Tk输入框启动失败: {err}")
+                return None
+
+            output = stdout_text.strip().splitlines()
+            if not output:
+                return None
+
+            payload = json.loads(output[-1])
+            return payload.get("text")
+        except subprocess.TimeoutExpired:
+            print("Tk输入框超时关闭")
+            return None
+        except Exception as e:
+            print(f"Tk输入框异常: {e}")
+            return None
+
     def handle_events(self):
         # 先处理KEYDOWN事件中的V键（在Soul查看器中先处理ESC和V）
         v_key_handled = False
@@ -242,7 +337,26 @@ class Game:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if self.input_rect.collidepoint(event.pos):
                     self.input_active = True
-                    pygame.key.start_text_input()
+                    pygame.key.stop_text_input()
+                    window_pos = self._get_window_screen_position()
+                    if window_pos is not None:
+                        win_x, win_y = window_pos
+                        dialog_x = win_x + self.input_rect.x
+                        dialog_y = win_y + self.input_rect.y
+                    else:
+                        dialog_x = self.input_rect.x
+                        dialog_y = self.input_rect.y
+
+                    dialog_text = self.open_tk_input_dialog(
+                        screen_x=dialog_x,
+                        screen_y=dialog_y,
+                        width=self.input_rect.width,
+                        height=self.input_rect.height,
+                    )
+                    if dialog_text is not None:
+                        self.player_input = dialog_text
+                        self._ime_text = ""
+                    self.input_active = False
                 else:
                     if self.input_active:
                         pygame.key.stop_text_input()
