@@ -53,3 +53,8 @@ def create_topic_from_dict(topic_dict: dict) -> Topic:
         stance_a=topic_dict.get("stance_a", ""),
         stance_b=topic_dict.get("stance_b", "")
     )
+
+
+def get_all_topics(topics_dir: str = None) -> list:
+    """获取所有辩题"""
+    return load_topics(topics_dir)

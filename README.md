@@ -4,6 +4,7 @@
 
 ## 🎮 游戏特色
 
+- **Web 端**：开始界面、辩论界面和 Soul 编辑器都在浏览器中完成
 - **Soul系统**：为每个辩手定制独特的性格和说话风格
 - **Memory系统**：记录辩手的所有发言，供裁判评判
 - **LLM支持**：可选接入GPT-4等大语言模型，生成更智能的辩论内容
@@ -22,41 +23,40 @@ ai-debate-game/
 │   ├── game_state.py    # 游戏状态
 │   ├── llm_client.py    # LLM调用
 │   └── soul_manager.py   # Soul管理
-├── hackathon_game/       # Pygame前端
-│   ├── main.py          # 游戏主程序
-│   ├── menu.py          # 菜单界面
-│   ├── soul_editor.py   # Soul编辑器
-│   └── topic_select.py   # 立场选择
+├── hackathon_game/       # Web 前端入口
+│   ├── main.py          # Web 启动器
+│   ├── web_server.py    # 兼容入口
+│   ├── web_http.py      # 本地 HTTP 服务
+│   ├── web_app.py       # Web 业务状态
+│   ├── web_frontend.py  # 页面 HTML
+│   └── web_data.py      # Soul/辩手数据
 └── README.md
 ```
 
 ## 🚀 快速开始
 
-### 1. 安装依赖
-
-```bash
-pip install pygame
-```
-
-### 2. 运行游戏
+### 1. 运行游戏
 
 ```bash
 cd hackathon_game
 python main.py
 ```
 
-### 3. 游戏操作
+启动后会自动打开浏览器页面。
 
-| 按键 | 功能 |
+### 2. 页面说明
+
+- 开始界面：选择辩题、立场和 LLM 模式
+- 辩论界面：输入教练指导并查看发言记录
+- Soul 编辑：直接在网页中编辑并保存模板
+
+### 3. 页面操作
+
+| 页面 | 功能 |
 |------|------|
-| **1** | 开始游戏 |
-| **2** | Soul编辑 |
-| **M** | 切换AI/演示模式 |
-| **Tab** | 激活/关闭输入 |
-| **Enter** | 发送指导 |
-| **空格** | 使用默认指导 |
-| **V** | 查看AI灵魂 |
-| **ESC** | 退出 |
+| **菜单** | 选择辩题、立场和模式 |
+| **辩论** | 输入教练指导、推进 AI 回合 |
+| **Soul 编辑** | 编辑并保存辩手模板 |
 
 ## ⚙️ LLM配置（可选）
 
@@ -93,7 +93,7 @@ python main.py
 
 ## 🛠️ 技术栈
 
-- **前端**：Python + Pygame
+- **前端**：浏览器 + HTML/CSS/JavaScript
 - **后端**：Python 辩论逻辑
 - **AI**：OpenAI GPT / Ollama（可选）
 

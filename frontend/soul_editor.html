@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soul编辑器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #1a2332;
+            --bg-panel: #232a3b;
+            --bg-input: #2f3444;
+            --text-primary: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --player-color: #50c878;
+            --border-color: #3d4556;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header h1 {
+            font-size: 20px;
+        }
+
+        .header-hint {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 200px;
+            background: var(--bg-secondary);
+            padding: 15px;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .sidebar-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .soul-tabs {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .soul-tab {
+            padding: 12px 15px;
+            background: var(--bg-panel);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .soul-tab:hover {
+            border-color: var(--border-color);
+        }
+
+        .soul-tab.active {
+            border-color: var(--player-color);
+            background: var(--bg-input);
+        }
+
+        .soul-tab .tab-name {
+            font-weight: 500;
+        }
+
+        .soul-tab .tab-role {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 3px;
+        }
+
+        .soul-tab.editable .tab-badge {
+            color: var(--player-color);
+            font-size: 10px;
+        }
+
+        .editor-area {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .editor-toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--player-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5fd88a;
+        }
+
+        .btn-secondary {
+            background: var(--bg-panel);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--player-color);
+        }
+
+        .btn-danger {
+            background: #d94a4a;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e95a5a;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        textarea {
+            flex: 1;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            line-height: 1.6;
+            resize: none;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--player-color);
+        }
+
+        .footer {
+            background: var(--bg-secondary);
+            padding: 12px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-hint {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .status {
+            font-size: 13px;
+            color: var(--player-color);
+        }
+
+        .shortcuts {
+            display: flex;
+            gap: 20px;
+        }
+
+        .shortcut {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .shortcut kbd {
+            background: var(--bg-input);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 Soul编辑器</h1>
+        <div class="header-right">
+            <span class="header-hint">编辑你的辩论队员灵魂配置</span>
+            <button class="btn btn-secondary" id="btn-back">返回首页</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-title">选择辩手</div>
+            <div class="soul-tabs" id="soul-tabs">
+                <!-- 动态生成 -->
+            </div>
+        </div>
+
+        <div class="editor-area">
+            <div class="editor-toolbar">
+                <button class="btn btn-primary" id="btn-save">💾 保存</button>
+                <button class="btn btn-secondary" id="btn-reset">🔄 重置模板</button>
+            </div>
+            <textarea id="soul-editor" placeholder="加载中..."></textarea>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="shortcuts">
+            <span class="shortcut"><kbd>Tab</kbd> 切换辩手</span>
+            <span class="shortcut"><kbd>Ctrl+Enter</kbd> 保存</span>
+            <span class="shortcut"><kbd>ESC</kbd> 关闭</span>
+        </div>
+        <span class="status" id="status">就绪</span>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:5000/api';
+
+        let souls = {};
+        let currentAgent = null;
+        let hasChanges = false;
+
+        async function loadSouls() {
+            const response = await fetch(`${API_BASE}/souls`);
+            const result = await response.json();
+
+            if (result.success) {
+                souls = result.souls;
+                renderTabs();
+
+                // 默认选中第一个可编辑的
+                const editable = Object.values(souls).find(s => s.editable);
+                if (editable) {
+                    selectAgent(editable.id);
+                }
+            }
+        }
+
+        function renderTabs() {
+            const container = document.getElementById('soul-tabs');
+            container.innerHTML = '';
+
+            Object.values(souls).forEach(soul => {
+                const tab = document.createElement('div');
+                tab.className = 'soul-tab' + (soul.editable ? ' editable' : '') +
+                               (soul.id === currentAgent ? ' active' : '');
+                tab.innerHTML = `
+                    <div class="tab-name">${soul.name}</div>
+                    <div class="tab-role">${soul.id.includes('player') ? '己方' : '对手'}</div>
+                    ${soul.editable ? '<div class="tab-badge">可编辑</div>' : '<div class="tab-badge">只读</div>'}
+                `;
+                tab.addEventListener('click', () => selectAgent(soul.id));
+                container.appendChild(tab);
+            });
+        }
+
+        function selectAgent(agentId) {
+            if (hasChanges && currentAgent) {
+                if (!confirm('有未保存的修改，是否保存？')) {
+                } else {
+                    saveSoul();
+                }
+            }
+
+            currentAgent = agentId;
+            const soul = souls[agentId];
+
+            document.getElementById('soul-editor').value = soul.content;
+            document.getElementById('soul-editor').disabled = !soul.editable;
+            document.getElementById('btn-save').disabled = !soul.editable;
+            document.getElementById('btn-reset').disabled = !soul.editable;
+
+            hasChanges = false;
+            renderTabs();
+            updateStatus('已加载: ' + soul.name);
+        }
+
+        document.getElementById('soul-editor').addEventListener('input', () => {
+            if (souls[currentAgent]?.content !== document.getElementById('soul-editor').value) {
+                hasChanges = true;
+                updateStatus('有未保存的修改');
+            }
+        });
+
+        async function saveSoul() {
+            if (!currentAgent || !souls[currentAgent]?.editable) return;
+
+            const content = document.getElementById('soul-editor').value;
+
+            const response = await fetch(`${API_BASE}/souls/${currentAgent}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                souls[currentAgent].content = content;
+                hasChanges = false;
+                updateStatus('已保存: ' + souls[currentAgent].name);
+            } else {
+                updateStatus('保存失败: ' + result.error);
+            }
+        }
+
+        async function resetSoul() {
+            if (!currentAgent || !souls[currentAgent]?.editable) return;
+
+            if (!confirm('确定要重置为默认模板吗？这将覆盖当前修改。')) return;
+
+            const response = await fetch(`${API_BASE}/souls/${currentAgent}/reset`, {
+                method: 'POST'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                await loadSouls();
+                selectAgent(currentAgent);
+                updateStatus('已重置: ' + souls[currentAgent].name);
+            }
+        }
+
+        async function navigateHome() {
+            if (hasChanges) {
+                if (confirm('有未保存的修改，是否保存后返回？')) {
+                    await saveSoul();
+                }
+            }
+            window.location.href = '/';
+        }
+
+        document.getElementById('btn-save').addEventListener('click', saveSoul);
+        document.getElementById('btn-reset').addEventListener('click', resetSoul);
+        document.getElementById('btn-back').addEventListener('click', navigateHome);
+
+        function updateStatus(text) {
+            document.getElementById('status').textContent = text;
+        }
+
+        document.addEventListener('keydown', async (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                await saveSoul();
+            }
+
+            if (e.key === 'Tab' && !e.target.matches('textarea')) {
+                e.preventDefault();
+                const agentIds = Object.keys(souls);
+                const currentIndex = agentIds.indexOf(currentAgent);
+                const nextIndex = (currentIndex + 1) % agentIds.length;
+                selectAgent(agentIds[nextIndex]);
+            }
+
+            if (e.key === 'Escape') {
+                await navigateHome();
+            }
+        });
+
+        window.addEventListener('beforeunload', (e) => {
+            if (hasChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        loadSouls();
+    </script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 辩论赛</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 菜单页面 -->
+    <div id="menu-page" class="page">
+        <div class="menu-container">
+            <h1 class="title">驴唇对马嘴</h1>
+            <p class="subtitle">人工智能辩论挑战</p>
+
+            <div class="menu-buttons">
+                <button id="btn-start" class="btn btn-primary">开始游戏</button>
+                <button id="btn-soul-editor" class="btn btn-secondary">Soul编辑</button>
+            </div>
+
+            <div class="mode-toggle">
+                <label class="toggle-label">
+                    <input type="checkbox" id="llm-mode">
+                    <span class="toggle-switch"></span>
+                    <span class="toggle-text">🤖 AI模式</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- 立场选择页面 -->
+    <div id="stance-page" class="page hidden">
+        <div class="page-container">
+            <h2 class="page-title">选择立场</h2>
+            <p class="topic-display" id="selected-topic"></p>
+
+            <div class="stance-container">
+                <div id="stance-positive" class="stance-option selected">
+                    <div class="stance-icon">🔵</div>
+                    <div class="stance-name">正方</div>
+                    <div class="stance-text" id="stance-a-text"></div>
+                </div>
+                <div class="stance-divider">VS</div>
+                <div id="stance-negative" class="stance-option">
+                    <div class="stance-icon">🔴</div>
+                    <div class="stance-name">反方</div>
+                    <div class="stance-text" id="stance-b-text"></div>
+                </div>
+            </div>
+
+            <div class="page-actions">
+                <button id="btn-confirm-stance" class="btn btn-primary">确认选择</button>
+                <button id="btn-change-topic" class="btn btn-secondary">重新抽题</button>
+            </div>
+
+            <div class="page-hints">
+                <span class="hint">← / 1 选择正方</span>
+                <span class="hint">→ / 2 选择反方</span>
+                <span class="hint">Enter 确认</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏页面 -->
+    <div id="game-page" class="page hidden">
+        <div class="game-container">
+            <!-- 左侧辩论区 - 会议室布局 -->
+            <div class="debate-area">
+                <div class="room" id="room">
+                    <!-- 连接线 -->
+                    <svg class="lines">
+                        <line x1="400" y1="250" x2="90" y2="180"/>
+                        <line x1="400" y1="300" x2="55" y2="300"/>
+                        <line x1="400" y1="350" x2="40" y2="420"/>
+                        <line x1="400" y1="250" x2="710" y2="180"/>
+                        <line x1="400" y1="300" x2="745" y2="300"/>
+                        <line x1="400" y1="350" x2="760" y2="420"/>
+                        <line x1="400" y1="210" x2="400" y2="95"/>
+                        <line x1="400" y1="210" x2="70" y2="60"/>
+                        <line x1="400" y1="210" x2="730" y2="60"/>
+                    </svg>
+
+                    <!-- 裁判 -->
+                    <div class="person judge" id="judge">
+                        <img src="普通马.png" class="person-image person-image-xs" alt="裁判">
+                        <span class="role-tag">⚖️ 裁判</span>
+                    </div>
+
+                    <!-- 左上教练 -->
+                    <div class="person coach coach-left" id="coach-left">
+                        <img src="马赛克.png" class="person-image person-image-xs" alt="教练">
+                        <span class="role-tag">🏅 教练</span>
+                    </div>
+
+                    <!-- 右上教练 -->
+                    <div class="person coach coach-right" id="coach-right">
+                        <img src="驴塞克.png" class="person-image person-image-xs" alt="AI教练">
+                        <span class="role-tag">🏅 AI教练</span>
+                    </div>
+
+                    <!-- 左侧3人 (正方) -->
+                    <div class="person player-left left-1" id="player-0">
+                        <img src="马嘶克.png" class="person-image person-image-small" alt="正一">
+                        <span class="role-tag">正一</span>
+                    </div>
+
+                    <div class="person player-left left-2" id="player-1">
+                        <img src="赵高-马.png" class="person-image person-image-xlarge" alt="正二">
+                        <span class="role-tag">正二</span>
+                    </div>
+
+                    <div class="person player-left left-3" id="player-2">
+                        <img src="赛马娘.png" class="person-image person-image-small" alt="正三">
+                        <span class="role-tag">正三</span>
+                    </div>
+
+                    <!-- 右侧3人 (反方) -->
+                    <div class="person player-right right-1" id="opponent-0">
+                        <img src="驴斯克.png" class="person-image person-image-small" alt="反一">
+                        <span class="role-tag">反一</span>
+                    </div>
+
+                    <div class="person player-right right-2" id="opponent-1">
+                        <img src="赵高-驴.png" class="person-image" alt="反二">
+                        <span class="role-tag">反二</span>
+                    </div>
+
+                    <div class="person player-right right-3" id="opponent-2">
+                        <img src="赛驴娘.png" class="person-image person-image-small" alt="反三">
+                        <span class="role-tag">反三</span>
+                    </div>
+
+                    <!-- 底部团队色条 -->
+                    <div class="team-bar">
+                        <div class="bar-left"></div>
+                        <div class="bar-right"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧信息面板 -->
+            <div class="info-panel">
+                <div class="panel-section">
+                    <div class="section-label">辩题</div>
+                    <div class="section-value topic-title" id="game-topic"></div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="section-label">你的立场</div>
+                    <div class="section-value stance-name" id="game-stance"></div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="section-label">当前环节</div>
+                    <div class="section-value phase-name" id="game-phase"></div>
+                    <div class="phase-progress">
+                        <span id="phase-step">1</span> / <span id="phase-total">2</span>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="section-label">当前发言</div>
+                    <div class="section-value speaker-name" id="game-speaker"></div>
+                </div>
+
+                <div class="panel-section turn-indicator" id="turn-indicator">
+                    <div class="indicator-text" id="indicator-text">等待你的指导</div>
+                </div>
+
+                <div class="panel-section demo-tools hidden" id="demo-tools">
+                    <div class="section-label">演示快捷</div>
+                    <button id="btn-demo-end-lose" class="btn btn-secondary btn-sm">一键跳到结局（对方胜）</button>
+                </div>
+
+                <!-- 发言历史 -->
+                <div class="panel-section history-section">
+                    <div class="section-label">发言历史</div>
+                    <div class="history-list" id="history-list">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 教练指导 -->
+                <div class="panel-section guidance-section" id="guidance-section">
+                    <div class="section-label">教练指导</div>
+                    <textarea id="guidance-input" placeholder="输入你的战术指导..." rows="2"></textarea>
+                    <div class="guidance-actions">
+                        <button id="btn-submit-guidance" class="btn btn-primary btn-sm">发送</button>
+                        <button id="btn-skip-guidance" class="btn btn-secondary btn-sm">跳过</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 当前发言展示 -->
+        <div class="speech-bubble" id="speech-bubble">
+            <div class="speech-content" id="speech-content"></div>
+        </div>
+
+        <!-- Soul查看提示 -->
+        <div class="soul-hint">按 V 查看AI灵魂</div>
+    </div>
+
+    <!-- Soul查看器页面 -->
+    <div id="soul-viewer-page" class="page hidden">
+        <div class="soul-viewer-container">
+            <h2 class="viewer-title">AI灵魂查看器</h2>
+            <p class="viewer-hint">按 ESC 或 V 返回游戏</p>
+
+            <div class="soul-navigation">
+                <button id="btn-prev-soul" class="btn btn-nav">◀</button>
+                <span class="soul-counter"><span id="soul-current">1</span> / <span id="soul-total">8</span></span>
+                <button id="btn-next-soul" class="btn btn-nav">▶</button>
+            </div>
+
+            <div class="soul-info">
+                <div class="soul-name" id="soul-name"></div>
+                <div class="soul-badge" id="soul-badge"></div>
+            </div>
+
+            <div class="soul-content-box">
+                <pre class="soul-content" id="soul-content"></pre>
+            </div>
+
+            <div class="soul-readonly">（只读模式 - 仅供查看）</div>
+        </div>
+    </div>
+
+    <!-- 游戏结束页面 -->
+    <div id="gameover-page" class="page hidden">
+        <div class="gameover-container">
+            <h2 class="gameover-title">辩论结束</h2>
+            <div class="gameover-result">
+                <div class="result-item">
+                    <div class="result-label">辩题</div>
+                    <div class="result-value" id="result-topic"></div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">你的立场</div>
+                    <div class="result-value" id="result-stance"></div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">总发言轮次</div>
+                    <div class="result-value" id="result-rounds"></div>
+                </div>
+            </div>
+            <div class="judge-card">
+                <div class="result-label">裁判裁决</div>
+                <div class="judge-winner" id="judge-winner">评审中...</div>
+                <div class="judge-summary" id="judge-summary">正在根据双方历史发言生成结论。</div>
+            </div>
+            <div class="judge-clash-card hidden" id="judge-clash-card">
+                <div class="result-label">败诉加赛：和裁判对轰（共2轮）</div>
+                <div class="judge-clash-history" id="judge-clash-history"></div>
+                <textarea id="judge-clash-input" rows="3" placeholder="不服就来一段，和裁判正面交锋..."></textarea>
+                <div class="judge-clash-actions">
+                    <button id="btn-judge-clash" class="btn btn-primary btn-sm">和裁判对轰</button>
+                </div>
+            </div>
+            <div class="gameover-actions">
+                <button id="btn-play-again" class="btn btn-primary">再玩一局</button>
+                <button id="btn-back-menu" class="btn btn-secondary">返回菜单</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

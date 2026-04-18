@@ -16,8 +16,9 @@ if current_dir not in sys.path:
 
 from typing import Optional, Tuple
 from debate_flow import DebateFlow
-from game_state import create_initial_state, TurnType, Topic
+from game_state import create_initial_state, TurnType, Topic, GamePhase
 from topic_loader import get_random_topic
+from config import FREE_DEBATE_ROUNDS
 
 
 class DebateGame:
@@ -72,6 +73,9 @@ class DebateGame:
         # 发言内容缓存（用于前端显示）
         self.current_speech = ""
         self.speech_history = []
+
+        # 根据立场和环节同步初始发言信息
+        self.update_phase_info()
 
     def _init_memories(self):
         """初始化Memory文件"""
@@ -168,9 +172,10 @@ class DebateGame:
     def update_phase_info(self):
         """更新环节信息"""
         speaker = self.state.get_current_speaker()
+        positive_side = self.state.get_positive_side()
 
         # 更新当前发言者
-        side_name = "玩家方" if speaker["side"] == "player" else "对手方"
+        side_name = "正方" if speaker["side"] == positive_side else "反方"
         self.phase_info["current_speaker_name"] = f"{side_name}{speaker['name']}"
         self.phase_info["current_speaker_side"] = speaker["side"]
         self.phase_info["current_speaker_index"] = speaker["index"]
@@ -189,12 +194,17 @@ class DebateGame:
             self.phase_info["total_steps"] = 4
         elif self.state.current_phase == "free_debate":
             self.phase_info["step"] = self.state.free_debate_round + 1
-            self.phase_info["total_steps"] = 16
+            self.phase_info["total_steps"] = FREE_DEBATE_ROUNDS
         elif self.state.current_phase == "closing":
             self.phase_info["step"] = self.state.current_round
             self.phase_info["total_steps"] = 2
 
-    def process_player_guidance(self, guidance: str) -> dict:
+    def process_player_guidance(
+        self,
+        guidance: str,
+        free_debate_target_index: Optional[int] = None,
+        free_debate_asker_index: Optional[int] = None,
+    ) -> dict:
         """
         处理玩家教练指导
 
@@ -220,7 +230,11 @@ class DebateGame:
         side, index, name = speaker["side"], speaker["index"], speaker["name"]
 
         # 执行玩家输入
-        result = self.flow.process_player_input(guidance)
+        result = self.flow.process_player_input(
+            guidance,
+            free_debate_target_index=free_debate_target_index,
+            free_debate_asker_index=free_debate_asker_index,
+        )
 
         # 更新发言状态
         self.speaker_states[side][index] = True
@@ -295,6 +309,7 @@ class DebateGame:
             "player_stance": self.player_stance,
             "player_stance_text": self.player_stance_text,
             "current_phase": self.state.current_phase,
+            "current_turn": self.state.current_turn.value,
             "phase_name": self.get_phase_name(),
             "current_round": self.state.current_round,
             "is_player_turn": self.is_player_turn(),
@@ -313,7 +328,7 @@ class DebateGame:
 
     def is_game_over(self) -> bool:
         """检查游戏是否结束"""
-        return self.state.phase.value == "finished" or self.state.current_phase == ""
+        return self.state.phase in [GamePhase.JUDGMENT, GamePhase.FINISHED] or self.state.current_phase == ""
 
 
 # 导出

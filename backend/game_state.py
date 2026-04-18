@@ -75,6 +75,11 @@ class GameState:
 
     # 自由辩论轮次
     free_debate_round: int = 0
+    free_debate_start_side: Optional[str] = None
+    free_debate_initiative_side: Optional[str] = None
+    free_debate_pending_answer_side: Optional[str] = None
+    free_debate_current_asker_index: Optional[int] = None
+    free_debate_current_target_index: Optional[int] = None
 
     # 辩论记录
     rounds: list = field(default_factory=list)
@@ -83,53 +88,71 @@ class GameState:
     pending_player_guidance: bool = False
     pending_opponent_guidance: bool = False
 
+    def get_positive_side(self) -> str:
+        """获取正方对应的阵营（player/opponent）"""
+        return "player" if self.player_stance == "A" else "opponent"
+
+    def get_negative_side(self) -> str:
+        """获取反方对应的阵营（player/opponent）"""
+        return "opponent" if self.player_stance == "A" else "player"
+
     def get_current_speaker(self) -> dict:
         """获取当前发言的辩手信息"""
+        positive_side = self.get_positive_side()
+        negative_side = self.get_negative_side()
+
         if self.current_phase == "opening":
             if self.current_round == 1:
-                return {"side": "player", "index": 0, "name": "一辩", "role": "立论"}
+                return {"side": positive_side, "index": 0, "name": "一辩", "role": "立论"}
             else:
-                return {"side": "opponent", "index": 0, "name": "一辩", "role": "立论"}
+                return {"side": negative_side, "index": 0, "name": "一辩", "role": "立论"}
         elif self.current_phase == "rebuttal":
             if self.current_round == 1:
-                return {"side": "opponent", "index": 1, "name": "二辩", "role": "驳论"}
+                return {"side": positive_side, "index": 1, "name": "二辩", "role": "驳论"}
             else:
-                return {"side": "player", "index": 1, "name": "二辩", "role": "驳论"}
+                return {"side": negative_side, "index": 1, "name": "二辩", "role": "驳论"}
         elif self.current_phase == "question":
             # 质询环节：4个步骤
-            # round=1: 玩家方提问, round=2: 对手方回答
-            # round=3: 对手方提问, round=4: 玩家方回答
+            # round=1: 正方提问, round=2: 反方回答
+            # round=3: 反方提问, round=4: 正方回答
             if self.current_round == 1:
-                return {"side": "player", "index": 2, "name": "三辩", "role": "提问"}
+                return {"side": positive_side, "index": 2, "name": "三辩", "role": "提问"}
             elif self.current_round == 2:
-                return {"side": "opponent", "index": 2, "name": "三辩", "role": "回答"}
+                return {"side": negative_side, "index": 2, "name": "三辩", "role": "回答"}
             elif self.current_round == 3:
-                return {"side": "opponent", "index": 2, "name": "三辩", "role": "提问"}
+                return {"side": negative_side, "index": 2, "name": "三辩", "role": "提问"}
             else:
-                return {"side": "player", "index": 2, "name": "三辩", "role": "回答"}
+                return {"side": positive_side, "index": 2, "name": "三辩", "role": "回答"}
         elif self.current_phase == "free_debate":
-            # 自由辩论使用当前轮次来确定辩手（轮次由 free_debate_round 控制）
-            # 但这里 current_round 固定为 1，所以用 free_debate_round 来判断
-            # 玩家方和对手方交替发言
-            if self.free_debate_round == 0 or self.free_debate_round % 2 == 0:
-                side = "player"
+            # 自由辩论：发问方质询 -> 被质询方回答 -> 回答方成为下一轮发问方
+            if self.free_debate_pending_answer_side is not None:
+                side = self.free_debate_pending_answer_side
+                index = self.free_debate_current_target_index
+                role = "回答"
             else:
-                side = "opponent"
-            # 自由辩论时随机选择辩手（0-2）
-            index = (self.free_debate_round + (0 if side == "player" else 1)) % 3
-            return {"side": side, "index": index, "name": "辩手", "role": "自由辩论"}
+                side = self.free_debate_initiative_side or positive_side
+                index = self.free_debate_current_asker_index
+                role = "质询"
+
+            if index not in (0, 1, 2):
+                index = self.free_debate_round % 3
+
+            names = ["一辩", "二辩", "三辩"]
+            return {"side": side, "index": index, "name": names[index], "role": f"自由辩论{role}"}
         elif self.current_phase == "closing":
             if self.current_round == 1:
-                return {"side": "opponent", "index": 2, "name": "三辩", "role": "总结"}
+                return {"side": positive_side, "index": 2, "name": "三辩", "role": "总结"}
             else:
-                return {"side": "player", "index": 2, "name": "三辩", "role": "总结"}
+                return {"side": negative_side, "index": 2, "name": "三辩", "role": "总结"}
         return {"side": "", "index": -1, "name": "", "role": ""}
 
     def is_player_turn(self) -> bool:
         """是否是玩家回合（需要玩家输入）"""
         return self.current_turn in [
             TurnType.PLAYER_SPEAK,
-            TurnType.PLAYER_COACH_GUIDANCE
+            TurnType.PLAYER_COACH_GUIDANCE,
+            TurnType.PLAYER_QUESTION,
+            TurnType.PLAYER_ANSWER,
         ]
 
     def get_phase_name(self) -> str:
@@ -149,6 +172,10 @@ class GameState:
             TurnType.PLAYER_COACH_GUIDANCE: f"{speaker_name}教练指导",
             TurnType.OPPONENT_SPEAK: f"{speaker_name}发言",
             TurnType.OPPONENT_COACH_GUIDANCE: f"{speaker_name}教练指导",
+            TurnType.PLAYER_QUESTION: f"{speaker_name}发起质询",
+            TurnType.OPPONENT_QUESTION: f"{speaker_name}发起质询",
+            TurnType.PLAYER_ANSWER: f"{speaker_name}回答质询",
+            TurnType.OPPONENT_ANSWER: f"{speaker_name}回答质询",
             TurnType.PHASE_END: "环节结束",
         }
         return turn_descriptions.get(self.current_turn, "")
@@ -166,11 +193,14 @@ def create_initial_state(topic: Topic, player_stance: str = None) -> GameState:
     state.phase = GamePhase.TOPIC_REVEAL
     state.current_phase = "opening"
     state.current_round = 1
-    state.current_turn = TurnType.PLAYER_SPEAK
+    state.current_turn = TurnType.PLAYER_SPEAK if player_stance == "A" else TurnType.OPPONENT_SPEAK
 
     # 如果没有指定立场，则随机
     if player_stance is None:
         player_stance = random.choice(["A", "B"])
     state.player_stance = player_stance
+
+    # 根据最终立场修正开场发言方（正方先发言）
+    state.current_turn = TurnType.PLAYER_SPEAK if state.player_stance == "A" else TurnType.OPPONENT_SPEAK
 
     return state

@@ -82,7 +82,7 @@ class LLMClient:
         api_key = self.api_config.get("api_key", "")
         base_url = self.api_config.get("base_url", "https://api.openai.com/v1")
         model = self.api_config.get("model", "gpt-4o-mini")
-        temperature = self.api_config.get("temperature", 0.7)
+        temperature = self.api_config.get("temperature", 0.3)
         max_tokens = self.api_config.get("max_tokens", 500)
         timeout = self.api_config.get("timeout", 60)
 
@@ -115,7 +115,8 @@ class LLMClient:
 
         with urllib.request.urlopen(req, timeout=timeout) as response:
             result = json.loads(response.read().decode('utf-8'))
-            return result['choices'][0]['message']['content'].strip()
+            content = result['choices'][0]['message']['content'].strip()
+            return self._clean_think_content(content)
 
     def _call_anthropic(self, system_prompt: str, user_prompt: str) -> str:
         """调用Anthropic API"""
@@ -149,7 +150,8 @@ class LLMClient:
 
         with urllib.request.urlopen(req, timeout=30) as response:
             result = json.loads(response.read().decode('utf-8'))
-            return result['content'][0]['text'].strip()
+            content = result['content'][0]['text'].strip()
+            return self._clean_think_content(content)
 
     def _call_ollama(self, system_prompt: str, user_prompt: str) -> str:
         """调用Ollama本地API"""
@@ -176,7 +178,8 @@ class LLMClient:
 
         with urllib.request.urlopen(req, timeout=60) as response:
             result = json.loads(response.read().decode('utf-8'))
-            return result['response'].strip()
+            content = result['response'].strip()
+            return self._clean_think_content(content)
 
     def generate_debater_speech(
         self,
@@ -272,7 +275,7 @@ class LLMClient:
 辩论历史（最近几轮）：
 {history_str}
 
-请给出简洁有力的战术指导（30-50字）："""
+请给出50字左右的战术指导："""
 
         # 生成备用文本
         fallback = self._get_fallback_guidance(agent_name, phase)
@@ -297,6 +300,28 @@ class LLMClient:
         if system_lines:
             return '\n'.join(system_lines).strip()
         return soul
+
+    def _clean_think_content(self, content: str) -> str:
+        """清理think标签内容，只保留最终结果"""
+        import re
+
+        # 模式1: <think>...</think> 标签（提取标签外的内容）
+        # 如果有think标签，返回think之后的内容
+        think_match = re.search(r'</think>\s*(.*)$', content, re.DOTALL | re.IGNORECASE)
+        if think_match:
+            result = think_match.group(1).strip()
+            if result:
+                return result
+
+        # 模式2: <think>...</think> 包裹整个内容
+        think_only = re.search(r'<think>\s*(.*?)\s*</think>', content, re.DOTALL | re.IGNORECASE)
+        if think_only and not think_match:
+            # think标签里是完整内容，说明LLM把思考过程当输出了
+            # 返回空或者提示
+            return "[思考中...]"
+
+        # 没有think标签，直接返回原内容
+        return content
 
     def _get_phase_name(self, phase: str) -> str:
         """获取环节名称"""
