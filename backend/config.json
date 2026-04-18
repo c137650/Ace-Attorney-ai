@@ -1,9 +1,9 @@
 {
     "api": {
         "provider": "openai",
-        "base_url": "https://api.minimaxi.com/v1",
-        "api_key": "sk-cp-k2yBZ-DmPvfeNATpA3W4-qtrH3TaE3sHWcm8sxyMMHOb-ftzxAp5RKJJgbNYMaC3RPEgsopBHBJnwhlGNmclAO8QkFYPQWzdSZ8A46huy7TGrHwcqeQIWws",
-        "model": "minimax-m2.7",
+        "base_url": "",
+        "api_key": "",
+        "model": "",
         "temperature": 0.7,
         "max_tokens": 500,
         "timeout": 30
