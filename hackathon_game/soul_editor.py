@@ -140,7 +140,6 @@ class SoulEditor:
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
         self.root.bind("<Escape>", lambda _e: self._return_menu())
         self.root.bind("<Control-Return>", lambda _e: self._save_only(show_message=True))
-        self.root.bind("<Tab>", self._switch_next_debater)
 
     def _build_ui(self):
         title_bar = tk.Frame(self.root, bg=self.bg_color)
@@ -157,7 +156,7 @@ class SoulEditor:
 
         hint = tk.Label(
             title_bar,
-            text="Tab: 切换辩手   Ctrl+Enter: 保存   ESC: 返回",
+            text="Ctrl+Enter: 保存   ESC: 返回",
             bg=self.bg_color,
             fg=self.muted_text,
             font=("Microsoft YaHei UI", 12),
@@ -301,12 +300,6 @@ class SoulEditor:
         self._sync_editor_to_current()
         self.current_debater = index
         self._load_current_content_to_editor()
-
-    def _switch_next_debater(self, _event=None):
-        self._sync_editor_to_current()
-        self.current_debater = (self.current_debater + 1) % len(DEBATERS)
-        self._load_current_content_to_editor()
-        return "break"
 
     def _set_status(self, text, color=None):
         self.status_label.configure(text=text, fg=(color or self.success))
