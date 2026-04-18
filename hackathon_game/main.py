@@ -131,6 +131,8 @@ class Game:
         self.running = True
         self.waiting_ai = False
         self._ime_text = ""  # IME正在编辑的拼音
+        # 仅在Windows默认启用Tk覆盖输入；失败时会自动降级到Pygame输入
+        self.tk_overlay_enabled = (sys.platform == "win32")
 
         # Soul查看器状态
         self.soul_viewer = False  # 是否显示Soul查看器
@@ -181,6 +183,8 @@ class Game:
 
     def _get_window_screen_position(self):
         """获取Pygame客户区左上角屏幕坐标。"""
+        if sys.platform != "win32":
+            return None
         try:
             wm_info = pygame.display.get_wm_info()
             hwnd = wm_info.get("window")
@@ -194,6 +198,46 @@ class Game:
             return point.x, point.y
         except Exception:
             return None
+
+    def _start_pygame_text_input(self):
+        """启用Pygame原生输入作为跨平台兜底。"""
+        self.input_active = True
+        pygame.key.start_text_input()
+        pygame.key.set_text_input_rect(self.input_rect)
+
+    def _open_input_editor(self):
+        """优先使用Tk覆盖输入，失败时自动回退到Pygame输入。"""
+        if not self.tk_overlay_enabled:
+            self._start_pygame_text_input()
+            return
+
+        pygame.key.stop_text_input()
+        window_pos = self._get_window_screen_position()
+        if window_pos is not None:
+            win_x, win_y = window_pos
+            dialog_x = win_x + self.input_rect.x
+            dialog_y = win_y + self.input_rect.y
+        else:
+            dialog_x = self.input_rect.x
+            dialog_y = self.input_rect.y
+
+        dialog_text = self.open_tk_input_dialog(
+            screen_x=dialog_x,
+            screen_y=dialog_y,
+            width=self.input_rect.width,
+            height=self.input_rect.height,
+        )
+
+        if dialog_text is not None:
+            self.player_input = dialog_text
+            self._ime_text = ""
+            self.input_active = False
+            return
+
+        # Tk启动失败或用户取消：降级到Pygame输入，避免无法输入
+        print("Tk输入不可用，已切换为Pygame原生输入")
+        self.tk_overlay_enabled = False
+        self._start_pygame_text_input()
 
     def open_tk_input_dialog(self, screen_x: int, screen_y: int, width: int, height: int):
         """打开附着在input_area上的无边框Tk输入框，Enter提交。"""
@@ -336,27 +380,7 @@ class Game:
                     self._ime_text = ""
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if self.input_rect.collidepoint(event.pos):
-                    self.input_active = True
-                    pygame.key.stop_text_input()
-                    window_pos = self._get_window_screen_position()
-                    if window_pos is not None:
-                        win_x, win_y = window_pos
-                        dialog_x = win_x + self.input_rect.x
-                        dialog_y = win_y + self.input_rect.y
-                    else:
-                        dialog_x = self.input_rect.x
-                        dialog_y = self.input_rect.y
-
-                    dialog_text = self.open_tk_input_dialog(
-                        screen_x=dialog_x,
-                        screen_y=dialog_y,
-                        width=self.input_rect.width,
-                        height=self.input_rect.height,
-                    )
-                    if dialog_text is not None:
-                        self.player_input = dialog_text
-                        self._ime_text = ""
-                    self.input_active = False
+                    self._open_input_editor()
                 else:
                     if self.input_active:
                         pygame.key.stop_text_input()
