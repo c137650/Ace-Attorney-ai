@@ -237,14 +237,14 @@ class SoulManager:
     def get_agent_name(self, agent_id: str) -> str:
         """获取Agent名称"""
         names = {
-            "player_debater_1": "正方一辩「张明」",
-            "player_debater_2": "正方二辩「李华」",
-            "player_debater_3": "正方三辩「王强」",
-            "opponent_debater_1": "反方一辩「陈思」",
-            "opponent_debater_2": "反方二辩「赵敏」",
-            "opponent_debater_3": "反方三辩「刘洋」",
-            "player_coach": "正方教练「陈指导」",
-            "opponent_coach": "反方教练「王指导」",
+            "player_debater_1": "正方一辩「马嘶克」",
+            "player_debater_2": "正方二辩「赵高」",
+            "player_debater_3": "正方三辩「赛马娘」",
+            "opponent_debater_1": "反方一辩「驴嘶克」",
+            "opponent_debater_2": "反方二辩「赵高」",
+            "opponent_debater_3": "反方三辩「赛驴娘」",
+            "player_coach": "正方教练「马」",
+            "opponent_coach": "反方教练「驴」",
         }
         return names.get(agent_id, agent_id)
 

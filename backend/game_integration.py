@@ -85,12 +85,12 @@ class DebateGame:
 
             # 辩手名称映射
             debater_names = {
-                "player_debater_1": "张明",
-                "player_debater_2": "李华",
-                "player_debater_3": "王强",
-                "opponent_debater_1": "陈思",
-                "opponent_debater_2": "赵敏",
-                "opponent_debater_3": "刘洋",
+                "player_debater_1": "马嘶克",
+                "player_debater_2": "赵高",
+                "player_debater_3": "赛马娘",
+                "opponent_debater_1": "驴嘶克",
+                "opponent_debater_2": "赵高",
+                "opponent_debater_3": "赛驴娘",
             }
 
             # 初始化每个辩手的Memory

@@ -782,11 +782,25 @@ body {
     font-size: 14px;
     resize: none;
     font-family: inherit;
+    caret-color: #ffffff;
+    opacity: 1;
+    -webkit-text-fill-color: #ffffff;
 }
 
 #guidance-input:focus {
     outline: none;
     border-color: var(--player-color);
+}
+
+#guidance-input::placeholder {
+    color: rgba(255, 255, 255, 0.8);
+    opacity: 1;
+}
+
+#guidance-input:disabled {
+    opacity: 1;
+    -webkit-text-fill-color: #ffffff;
+    color: #ffffff;
 }
 
 .guidance-actions {
